@@ -1,37 +1,33 @@
 {
-    "name": "node-red-contrib-components",
-    "description": "reusable flows with a well defined API. Write components and use them anywhere in your node-red app",
-    "version": "0.3.4",
-    "license": "MIT",
-    "author": "Oliver Charlet <oliver.charlet@clarities.de>",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/ollixx/node-red-contrib-components.git"
-    },
-    "keywords": [
-        "node-red",
-        "component",
-        "reusable",
-        "flow",
-        "api",
-        "subflow"
-    ],
-    "node-red": {
-        "nodes": {
-            "component-start": "components/component-start.js",
-            "component-return": "components/component-return.js",
-            "run-component": "components/run-component.js"
-        }
-    },
-    "devDependencies": {
-        "mocha": "^7.0.1",
-        "node-red": "^1.2.2",
-        "node-red-node-test-helper": "^0.2.7",
-        "puppeteer": "^12.0.1"
-    },
-    "dependencies": {},
-    "scripts": {
-        "test": "mocha components/test/*_spec.js",
-        "uitest": "npm --prefix ./components/uitest/ install; cd components/uitest/; mocha *_spec.js"
+  "name": "node-red-contrib-components-vh",
+  "description": "Reusable flows with a well defined API. Write components and use them anywhere in your node-red app",
+  "version": "0.3.4",
+  "license": "MIT",
+  "author": "Oliver Charlet <oliver.charlet@clarities.de>",
+  "repository": {},
+  "keywords": [
+    "node-red",
+    "component",
+    "reusable",
+    "flow",
+    "api",
+    "subflow"
+  ],
+  "node-red": {
+    "nodes": {
+      "component-start": "components/component-start.js",
+      "component-return": "components/component-return.js",
+      "run-component": "components/run-component.js"
     }
+  },
+  "devDependencies": {
+    "mocha": "^10.3.0",
+    "node-red": "^3.1.5",
+    "node-red-node-test-helper": "^0.3.3",
+    "puppeteer": "^22.0.0"
+  },
+  "scripts": {
+    "test": "mocha components/test/*_spec.js",
+    "uitest": "npm --prefix ./components/uitest/ install; cd components/uitest/; mocha *_spec.js"
+  }
 }
