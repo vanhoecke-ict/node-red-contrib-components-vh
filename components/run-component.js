@@ -1,7 +1,6 @@
 const componentsEmitter = require("./emitter");
 
 module.exports = function (RED) {
-
   const EVENT_START_FLOW = "comp-start-flow";
   const EVENT_RETURN_FLOW = "comp-flow-return";
 
@@ -11,7 +10,7 @@ module.exports = function (RED) {
       if (typeof msg._comp == "undefined") {
         // create from scratch
         msg._comp = {
-          stack: []
+          stack: [],
         };
       }
 
@@ -20,14 +19,20 @@ module.exports = function (RED) {
       // let targetComponent = RED.nodes.getNode(node.targetComponentId);
       let targetComponent = null;
       // work around for RED.nodes.getNode( not working in node-red-test-helper
-      RED.nodes.eachNode((n) => { if (n.id == node.targetComponentId) { targetComponent = n } });
+      RED.nodes.eachNode((n) => {
+        if (n.id == node.targetComponentId) {
+          targetComponent = n;
+        }
+      });
       if (!targetComponent) {
-        throw new Error("could not find node for id: " + node.targetComponentId);
+        throw new Error(
+          "could not find node for id: " + node.targetComponentId
+        );
       }
       let usecontext = targetComponent.usecontext;
 
       // push my ID onto the stack - the next return will come back to me
-      let stackEntry = { callerId: node.id, targetId: node.targetComponentId }
+      let stackEntry = { callerId: node.id, targetId: node.targetComponentId };
       let context = {};
       if (usecontext) {
         /* store the current context as parent.
@@ -46,7 +51,7 @@ module.exports = function (RED) {
       msg._comp.stack.push(stackEntry);
 
       // setup msg from parameters
-      let validationErrors = {}
+      let validationErrors = {};
       // we read the list from the current targetComponent, as it might have changed without touching the RUN node.
       // That means, that some parameters are not reflected or changed in the paramSources.
       // That also means, that the RUN node should only keep track of: name, source, sourceType
@@ -59,42 +64,75 @@ module.exports = function (RED) {
         // If this RUN node has not yet a source definiton (was not touched after an API change), we just check for required params.
         if (!paramSource) {
           if (paramDef.required) {
-            validationErrors[paramName] = "missing source. please set the parameter to a valid input"
+            validationErrors[paramName] =
+              "missing source. please set the parameter to a valid input";
           }
           continue; // more cheks not possible if we have no paramSource here.
         }
 
         // an empty, optional parameter is evaluated only, if the source type is "string".
         // In that case, the parameter is set(!). It is not put into the message in all other cases.
-        if (paramSource.source && paramSource.source.length > 0 || paramSource.sourceType == "str") {
-          val = RED.util.evaluateNodeProperty(paramSource.source, paramSource.sourceType, node, msg);
+        if (
+          (paramSource.source && paramSource.source.length > 0) ||
+          paramSource.sourceType == "str"
+        ) {
+          val = RED.util.evaluateNodeProperty(
+            paramSource.source,
+            paramSource.sourceType,
+            node,
+            msg
+          );
         }
         if (val == null || val == undefined) {
           if (paramDef.required) {
-            validationErrors[paramName] = RED._("components.message.missingProperty", { parameter: paramName });
+            validationErrors[paramName] = RED._(
+              "components.message.missingProperty",
+              { parameter: paramName }
+            );
           }
         } else {
           // validate types
-          let type = typeof (val)
+          let type = typeof val;
           switch (paramDef.type) {
             case "number": {
               if (type != "number") {
-                validationErrors[paramName] = RED._("components.message.validationError",
-                  { parameter: paramName, expected: paramDef.type, invalidType: type, value: val });
+                validationErrors[paramName] = RED._(
+                  "components.message.validationError",
+                  {
+                    parameter: paramName,
+                    expected: paramDef.type,
+                    invalidType: type,
+                    value: val,
+                  }
+                );
               }
               break;
             }
             case "string": {
               if (type != "string") {
-                validationErrors[paramName] = RED._("components.message.validationError",
-                  { parameter: paramName, expected: paramDef.type, invalidType: type, value: val });
+                validationErrors[paramName] = RED._(
+                  "components.message.validationError",
+                  {
+                    parameter: paramName,
+                    expected: paramDef.type,
+                    invalidType: type,
+                    value: val,
+                  }
+                );
               }
               break;
             }
             case "boolean": {
               if (type != "boolean") {
-                validationErrors[paramName] = RED._("components.message.validationError",
-                  { parameter: paramName, expected: paramDef.type, invalidType: type, value: val });
+                validationErrors[paramName] = RED._(
+                  "components.message.validationError",
+                  {
+                    parameter: paramName,
+                    expected: paramDef.type,
+                    invalidType: type,
+                    value: val,
+                  }
+                );
               }
               break;
             }
@@ -104,8 +142,10 @@ module.exports = function (RED) {
                   JSON.parse(val);
                 }
               } catch (err) {
-                validationErrors[paramName] = RED._("components.message.jsonValidationError",
-                  { parameter: paramName, value: val });
+                validationErrors[paramName] = RED._(
+                  "components.message.jsonValidationError",
+                  { parameter: paramName, value: val }
+                );
               }
               break;
             }
@@ -127,11 +167,18 @@ module.exports = function (RED) {
       }
 
       if (Object.keys(validationErrors).length > 0) {
-        node.status({ fill: "red", shape: "ring", text: RED._("components.message.hasValidationErrors") });
+        node.status({
+          fill: "red",
+          shape: "ring",
+          text: RED._("components.message.hasValidationErrors"),
+        });
         node.error({ validationErrors: validationErrors });
       } else {
         // send event
-        componentsEmitter.emit(EVENT_START_FLOW + "-" + node.targetComponentId, msg);
+        componentsEmitter.emit(
+          EVENT_START_FLOW + "-" + node.targetComponentId,
+          msg
+        );
       }
     } catch (err) {
       console.trace(node.name || node.type, node.id, err);
@@ -151,32 +198,43 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
 
     var node = this;
-    node.targetComponentId = config.targetComponentId || config.targetComponent.id;
+    node.targetComponentId =
+      config.targetComponentId || config.targetComponent.id;
     node.paramSources = config.paramSources;
     node.statuz = config.statuz;
     node.statuzType = config.statuzType;
     node.outLabels = config.outLabels;
 
     if (!node.targetComponentId) {
-      node.error(RED._("components.message.componentNotConnected"))
-      node.status({ fill: "red", shape: "dot", text: RED._("components.message.componentNotConnected") })
+      node.error(RED._("components.message.componentNotConnected"));
+      node.status({
+        fill: "red",
+        shape: "dot",
+        text: RED._("components.message.componentNotConnected"),
+      });
     }
 
     function setStatuz(node, msg) {
       let done = (err, statuz) => {
-        if (typeof (statuz) != "object") {
-          statuz = { text: statuz }
+        if (typeof statuz != "object") {
+          statuz = { text: statuz };
         }
         node.status(statuz);
-      }
-      if (node.propertyType === 'jsonata') {
+      };
+      if (node.propertyType === "jsonata") {
         RED.util.evaluateJSONataExpression(node.statuz, msg, (err, val) => {
-          done(undefined, val)
+          done(undefined, val);
         });
       } else {
-        let res = RED.util.evaluateNodeProperty(node.statuz, node.statuzType, node, msg, (err, val) => {
-          done(undefined, val)
-        });
+        let res = RED.util.evaluateNodeProperty(
+          node.statuz,
+          node.statuzType,
+          node,
+          msg,
+          (err, val) => {
+            done(undefined, val);
+          }
+        );
       }
     }
 
@@ -186,18 +244,26 @@ module.exports = function (RED) {
         // Since the msg sent to all listeners is the same(!) js object and we modify it here,
         // the next listener does not receive the _comp anymore. And so should skip it, as there
         // can only be one legal receiver.
-        return
+        return;
       }
-      if (typeof msg._comp.stack == "undefined" || msg._comp.stack == null || msg._comp.stack.length == 0) {
-        node.error(RED._("components.message.invalid_stack", { nodeId: node.id }), msg);
+      if (
+        typeof msg._comp.stack == "undefined" ||
+        msg._comp.stack == null ||
+        msg._comp.stack.length == 0
+      ) {
+        node.error(
+          RED._("components.message.invalid_stack", { nodeId: node.id }),
+          msg
+        );
       }
-      let stack = msg._comp.stack
+      let stack = msg._comp.stack;
       let returnNode = msg._comp.returnNode;
       let myEntry = stack.slice(-1)[0];
       let usecontext = myEntry.context ? true : false;
-      let inOnlyScenario = !returnNode && myEntry.targetId == node.targetComponentId;
+      let inOnlyScenario =
+        !returnNode && myEntry.targetId == node.targetComponentId;
       let broadcastScenario = returnNode && returnNode.broadcast;
-      let defaultScenario = returnNode && returnNode.callerId == config.id
+      let defaultScenario = returnNode && returnNode.callerId == config.id;
       if (inOnlyScenario || broadcastScenario || defaultScenario) {
         // here, the message is for me
         stack.pop();
@@ -220,9 +286,9 @@ module.exports = function (RED) {
           node.send(msg);
         } else {
           msgArr = [];
-          let portLabel
+          let portLabel;
           for (let i in node.outLabels) {
-            portLabel = node.outLabels[i]
+            portLabel = node.outLabels[i];
             if (portLabel == returnNode.name || portLabel == returnNode.id) {
               msgArr.push(msg);
             } else {
@@ -233,26 +299,38 @@ module.exports = function (RED) {
         }
         setStatuz(node, msg);
       }
-    }
-    componentsEmitter.on(EVENT_RETURN_FLOW + "-" + node.id, returnFromFlowHandler);
+    };
+    componentsEmitter.on(
+      EVENT_RETURN_FLOW + "-" + node.id,
+      returnFromFlowHandler
+    );
 
     // Clean up event handler on close
     this.on("close", function () {
-      componentsEmitter.removeListener(EVENT_RETURN_FLOW + "-" + node.id, returnFromFlowHandler);
+      componentsEmitter.removeListener(
+        EVENT_RETURN_FLOW + "-" + node.id,
+        returnFromFlowHandler
+      );
       node.status({});
     });
 
     this.on("input", function (msg) {
       if (!node.targetComponentId) {
-        node.error(RED._("components.message.componentNotConnected"))
-        node.status({ fill: "red", shape: "dot", text: RED._("components.message.componentNotConnected") })
-        return
+        node.error(RED._("components.message.componentNotConnected"));
+        node.status({
+          fill: "red",
+          shape: "dot",
+          text: RED._("components.message.componentNotConnected"),
+        });
+        return;
       }
 
-      node.status({ fill: "green", shape: "ring", text: RED._("components.message.running") });
+      node.status({
+        fill: "green",
+        shape: "ring",
+        text: RED._("components.message.running"),
+      });
       sendStartFlow(msg, node);
     });
-
   } // END: RUN COMPONENT
-
 }; // end module.exports
