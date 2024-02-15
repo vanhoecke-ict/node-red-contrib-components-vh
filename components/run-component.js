@@ -80,7 +80,14 @@ module.exports = function (RED) {
             paramSource.source,
             paramSource.sourceType,
             node,
-            msg
+            msg,
+            (err, result) => {
+              if (err) {
+                console.log("Error: " + err);
+              } else {
+                return result;
+              }
+            }
           );
         }
         if (val == null || val == undefined) {
